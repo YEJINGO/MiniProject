@@ -5,6 +5,7 @@ import com.example.miniproject.config.security.UserDetailsImp;
 import com.example.miniproject.dto.BoardRequestDto;
 import com.example.miniproject.dto.BoardResponseDto;
 import com.example.miniproject.dto.FilterRequestDto;
+import com.example.miniproject.dto.MsgAndHttpStatusDto;
 import com.example.miniproject.service.BoardService;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
@@ -31,5 +32,10 @@ public class BoardController {
     @GetMapping("/list")
     public ResponseEntity<List<BoardResponseDto>> getBoardsWithFilter(@ModelAttribute FilterRequestDto filterRequestDto) {
         return boardService.getBoarsWithFilter(filterRequestDto);
+    }
+
+    @DeleteMapping("/{boardId}")
+    public ResponseEntity<MsgAndHttpStatusDto> deleteBoard(@PathVariable Long boardId, @Parameter(hidden = true) @AuthenticationPrincipal UserDetailsImp userDetails) {
+        return boardService.deleteBoard(boardId, userDetails);
     }
 }

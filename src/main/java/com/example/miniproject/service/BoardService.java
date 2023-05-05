@@ -100,4 +100,18 @@ public class BoardService {
         List<BoardResponseDto> boardResponseDtoList = boardList.stream().map(BoardResponseDto::new).toList();
         return ResponseEntity.ok(boardResponseDtoList);
     }
+
+    @Transactional
+    public ResponseEntity<MsgAndHttpStatusDto> deleteBoard(Long boardId, UserDetailsImp userDetails) {
+        Board board = boardRepository.findById(boardId).orElseThrow(
+                () -> new NullPointerException("존재하지 않는 게시글입니다.")
+        );
+
+        if (!board.getUser().getUserId().equals(userDetails.getUser().getUserId())) {
+            return ResponseEntity.badRequest().body(new MsgAndHttpStatusDto("본인이 작성한 글만 삭제 가능합니다.", HttpStatus.FORBIDDEN.value()));
+        }
+
+        boardRepository.delete(board);
+        return ResponseEntity.ok(new MsgAndHttpStatusDto("삭제 완료!", HttpStatus.OK.value()));
+    }
 }
