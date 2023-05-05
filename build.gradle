@@ -36,6 +36,9 @@ dependencies {
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.11.2'
 	runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-jackson', version: '0.11.2'
 
+	// spring-doc for local test(swagger-ui)
+	implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version:'1.6.9'
+
 }
 
 tasks.named('test') {

@@ -27,8 +27,11 @@ public class UserService {
         User user = userRepository.findByUserId(userId).orElseThrow(
                 () -> new IllegalArgumentException("dd"));// 예외처리 해주기
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalStateException("dd");
+//        if (!passwordEncoder.matches(password, user.getPassword())) {
+//            throw new IllegalStateException("dd");
+//        }
+        if (!password.equals(user.getPassword())) {
+            throw new IllegalArgumentException("dd");
         }
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, jwtUtil.createToken(user.getUserId()));
     }
