@@ -7,6 +7,7 @@ import com.example.miniproject.dto.FilterRequestDto;
 import com.example.miniproject.dto.MsgAndHttpStatusDto;
 import com.example.miniproject.entity.Board;
 import com.example.miniproject.repository.BoardRepository;
+import com.example.miniproject.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,8 @@ public class BoardService {
 
     private final BoardRepository boardRepository;
 
+//    private final S3Uploader s3Uploader;
+
     @Transactional
     public ResponseEntity<?> createBoard(BoardRequestDto boardRequestDto, UserDetailsImp userDetailsImp) throws IOException {
 
@@ -50,6 +53,18 @@ public class BoardService {
 
             return ResponseEntity.ok(new BoardResponseDto(board));
         }
+
+        /*
+        S3에 이미지 저장
+        if (boardRequestDto.getImage() != null) {
+            String imgPath = s3Uploader.upload(boardRequestDTO.getImage());
+            Board board = new Board(boardRequestDto, imgPath);
+            boardRepository.save(board);
+
+            BoardResponseDto boardResponseDto = new BoardResponseDto(board);
+            return ResponseEntity.ok(boardResponseDto);
+        }
+         */
 
         return ResponseEntity.badRequest().body(new MsgAndHttpStatusDto("이미지 파일을 업로드해주세요.", HttpStatus.BAD_REQUEST.value()));
     }
@@ -113,5 +128,15 @@ public class BoardService {
 
         boardRepository.delete(board);
         return ResponseEntity.ok(new MsgAndHttpStatusDto("삭제 완료!", HttpStatus.OK.value()));
+
+        /*
+        S3 에서 이미지 파일 삭제
+        String imgPath = board.getImage();
+        if(s3Uploader.delete(imgPath)) {
+            return ResponseEntity.ok(new MsgAndHttpStatusDto("삭제 완료!"), HttpStatus.OK.value());
+        } else {
+            return ResponseEntity.bad_request().body(new MsgAndHttpStatusDto("삭제 실패!", HttpStatus.INTERNAL_SERVER_ERROR.value()));
+        }
+         */
     }
 }
