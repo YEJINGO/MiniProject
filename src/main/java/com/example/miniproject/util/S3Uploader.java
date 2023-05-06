@@ -20,11 +20,10 @@ public class S3Uploader {
     private String bucket;
 
     public String upload(MultipartFile multipartFile) throws IOException {
-        String fileName = UUID.randomUUID() + "_" + multipartFile.getOriginalFilename();
+        String fileName = UUID.randomUUID().toString() + "_" + multipartFile.getOriginalFilename();
 
         ObjectMetadata objMeta = new ObjectMetadata();
-        objMeta.setContentLength(multipartFile.getInputStream().available());
-
+        objMeta.setContentLength(multipartFile.getSize());
         amazonS3.putObject(bucket, fileName, multipartFile.getInputStream(), objMeta);
 
         return amazonS3.getUrl(bucket, fileName).toString();
