@@ -30,6 +30,8 @@ public class UserService {
 //        if (!passwordEncoder.matches(password, user.getPassword())) {
 //            throw new IllegalStateException("dd");
 //        }
+
+        // 회원가입 기능(with passwordEncoder) 구현되면 이 아래 코드는 삭제하고 위의 주석을 해제하면 됩니다.
         if (!password.equals(user.getPassword())) {
             throw new IllegalArgumentException("dd");
         }

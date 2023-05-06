@@ -9,62 +9,34 @@ import com.example.miniproject.entity.Board;
 import com.example.miniproject.repository.BoardRepository;
 import com.example.miniproject.util.S3Uploader;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BoardService {
 
-    @Value("${com.example.upload.path}")
-    private String uploadPath; // (로컬 테스트 위한 uploadPath)
-
     private final BoardRepository boardRepository;
 
-//    private final S3Uploader s3Uploader;
+    private final S3Uploader s3Uploader;
 
     @Transactional
     public ResponseEntity<?> createBoard(BoardRequestDto boardRequestDto, UserDetailsImp userDetailsImp) throws IOException {
-
+        // S3 에 이미지 저장(MultiPartFile 이 거치는 임시 저장 경로에서 tmp 파일이 삭제 안 되는 상황, S3및 DB 저장은 성공)
         if (boardRequestDto.getImage() != null) {
-            MultipartFile imgFile = boardRequestDto.getImage();
-            String originalName = imgFile.getOriginalFilename();
-            String uuid = UUID.randomUUID().toString();
-            Path savePath = Paths.get(uploadPath, uuid + "_" + originalName);
-
-            imgFile.transferTo(savePath);
-
-            String imgPath = savePath.toString();
-
+            String imgPath = s3Uploader.upload(boardRequestDto.getImage());
             Board board = new Board(boardRequestDto, imgPath);
             board.setUser(userDetailsImp.getUser());
             boardRepository.save(board);
-
-            return ResponseEntity.ok(new BoardResponseDto(board));
-        }
-
-        /*
-        S3에 이미지 저장
-        if (boardRequestDto.getImage() != null) {
-            String imgPath = s3Uploader.upload(boardRequestDTO.getImage());
-            Board board = new Board(boardRequestDto, imgPath);
-            boardRepository.save(board);
-
             BoardResponseDto boardResponseDto = new BoardResponseDto(board);
+
             return ResponseEntity.ok(boardResponseDto);
         }
-         */
 
         return ResponseEntity.badRequest().body(new MsgAndHttpStatusDto("이미지 파일을 업로드해주세요.", HttpStatus.BAD_REQUEST.value()));
     }
@@ -125,18 +97,12 @@ public class BoardService {
         if (!board.getUser().getUserId().equals(userDetails.getUser().getUserId())) {
             return ResponseEntity.badRequest().body(new MsgAndHttpStatusDto("본인이 작성한 글만 삭제 가능합니다.", HttpStatus.FORBIDDEN.value()));
         }
-
-        boardRepository.delete(board);
-        return ResponseEntity.ok(new MsgAndHttpStatusDto("삭제 완료!", HttpStatus.OK.value()));
-
-        /*
-        S3 에서 이미지 파일 삭제
         String imgPath = board.getImage();
-        if(s3Uploader.delete(imgPath)) {
-            return ResponseEntity.ok(new MsgAndHttpStatusDto("삭제 완료!"), HttpStatus.OK.value());
-        } else {
-            return ResponseEntity.bad_request().body(new MsgAndHttpStatusDto("삭제 실패!", HttpStatus.INTERNAL_SERVER_ERROR.value()));
+        if (s3Uploader.delete(imgPath)) { // S3 에서 이미지 파일 삭제가 성공하면 DB에 있는 게시글도 삭제
+            boardRepository.delete(board);
+            return ResponseEntity.ok(new MsgAndHttpStatusDto("삭제 완료!", HttpStatus.OK.value()));
         }
-         */
+
+        return ResponseEntity.ok(new MsgAndHttpStatusDto("삭제 실패!", HttpStatus.INTERNAL_SERVER_ERROR.value()));
     }
 }
