@@ -27,14 +27,16 @@ public class WebSecurityConfig {
     private final JwtUtil jwtUtil;
 
     private static final String[] AUTH_WHITELIST = {
-            "/user/**"
+            "/user/**",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/board/list"
     };
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        // h2-console 사용 및 resources 접근 허용 설정
+        // resources 접근 허용 설정
         return (web) -> web.ignoring()
-//                .requestMatchers(PathRequest.toH2Console())
                 .requestMatchers(PathRequest.toStaticResources().atCommonLocations());
     }
 

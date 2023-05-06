@@ -27,8 +27,13 @@ public class UserService {
         User user = userRepository.findByUserId(userId).orElseThrow(
                 () -> new IllegalArgumentException("dd"));// 예외처리 해주기
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalStateException("dd");
+//        if (!passwordEncoder.matches(password, user.getPassword())) {
+//            throw new IllegalStateException("dd");
+//        }
+
+        // 회원가입 기능(with passwordEncoder) 구현되면 이 아래 코드는 삭제하고 위의 주석을 해제하면 됩니다.
+        if (!password.equals(user.getPassword())) {
+            throw new IllegalArgumentException("dd");
         }
         response.addHeader(JwtUtil.AUTHORIZATION_HEADER, jwtUtil.createToken(user.getUserId()));
     }
