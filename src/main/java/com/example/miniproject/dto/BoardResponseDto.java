@@ -5,6 +5,8 @@ import lombok.Data;
 
 @Data
 public class BoardResponseDto {
+    private Long id;
+
     private String title;
 
     private String image;
@@ -20,6 +22,7 @@ public class BoardResponseDto {
     private String season;
 
     public BoardResponseDto(Board board) {
+        this.id = board.getId();
         this.title = board.getTitle();
         this.image = board.getImage();
         this.star = board.getStar();
