@@ -2,10 +2,8 @@ package com.example.miniproject.config.jwt;
 
 import com.example.miniproject.dto.MsgAndHttpStatusDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,18 +23,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
-        String token = jwtUtil.resolveToken(request);
+        String accessToken = jwtUtil.resolveAccessToken(request);
+        String refreshToken = jwtUtil.resolveRefreshToken(request);
 
-        if (token != null) {
-            if (!jwtUtil.validateToken(token)) {
-                jwtExceptionHandler(response, "Token Error", HttpStatus.UNAUTHORIZED.value());
-                return;
+
+        if (accessToken != null) {
+            String userId = jwtUtil.getUserInfoFromToken(accessToken).getSubject();
+
+            if (jwtUtil.validateToken(accessToken, jwtUtil.getAccessKey())) {
+                this.setAuthentication(accessToken);
+            } else if (!jwtUtil.validateToken(accessToken, jwtUtil.getAccessKey()) && refreshToken != null) {
+                boolean validateRefreshToken = jwtUtil.validateToken(refreshToken, jwtUtil.getRefreshKey());
+
+                boolean isRefreshToken = jwtUtil.existsRefreshToken(refreshToken);
+                if (validateRefreshToken && isRefreshToken) {
+                    /// 토큰 발급
+                    String newAccessToken = jwtUtil.createAccessToken(userId);
+                    /// 헤더에 어세스 토큰 추가
+                    jwtUtil.setHeaderAccessToken(response, newAccessToken);
+                    /// 컨텍스트에 넣기
+                    this.setAuthentication(newAccessToken);
+                }
             }
-            Claims info = jwtUtil.getUserInfoFromToken(token);
-            setAuthentication(info.getSubject());
 
         }
         filterChain.doFilter(request, response);
+
     }
 
     public void setAuthentication(String username) {

@@ -1,8 +1,10 @@
 package com.example.miniproject.service;
 
-import com.example.miniproject.dto.LoginRequestDto;
-import com.example.miniproject.entity.User;
 import com.example.miniproject.config.jwt.JwtUtil;
+import com.example.miniproject.dto.LoginRequestDto;
+import com.example.miniproject.entity.RefreshToken;
+import com.example.miniproject.entity.User;
+import com.example.miniproject.repository.TokenRepository;
 import com.example.miniproject.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +20,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private final TokenRepository tokenRepository;
 
     @Transactional
     public void login(LoginRequestDto loginRequestDto, HttpServletResponse response) {
@@ -35,6 +39,13 @@ public class UserService {
         if (!password.equals(user.getPassword())) {
             throw new IllegalArgumentException("dd");
         }
-        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, jwtUtil.createToken(user.getUserId()));
+
+        String accessToken = jwtUtil.createAccessToken(user.getUserId());
+        String refreshToken = jwtUtil.createRefreshToken(user.getUserId());
+
+        tokenRepository.save(new RefreshToken(refreshToken));
+
+        response.addHeader(JwtUtil.AUTHORIZATION_HEADER, accessToken);
+        response.addHeader(JwtUtil.REFRESHTOKEN_HEADER, refreshToken);
     }
 }
