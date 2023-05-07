@@ -31,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String userId = jwtUtil.getUserInfoFromToken(accessToken).getSubject();
 
             if (jwtUtil.validateToken(accessToken, jwtUtil.getAccessKey())) {
-                this.setAuthentication(accessToken);
+                this.setAuthentication(userId);
             } else if (!jwtUtil.validateToken(accessToken, jwtUtil.getAccessKey()) && refreshToken != null) {
                 boolean validateRefreshToken = jwtUtil.validateToken(refreshToken, jwtUtil.getRefreshKey());
 
@@ -42,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     /// 헤더에 어세스 토큰 추가
                     jwtUtil.setHeaderAccessToken(response, newAccessToken);
                     /// 컨텍스트에 넣기
-                    this.setAuthentication(newAccessToken);
+                    this.setAuthentication(userId);
                 }
             }
 
@@ -51,9 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     }
 
-    public void setAuthentication(String username) {
+    public void setAuthentication(String userId) {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
-        Authentication authentication = jwtUtil.createAuthentication(username);
+        Authentication authentication = jwtUtil.createAuthentication(userId);
         context.setAuthentication(authentication);
 
         SecurityContextHolder.setContext(context);
