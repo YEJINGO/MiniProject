@@ -1,7 +1,7 @@
 package com.example.miniproject.config.jwt;
 
 import com.example.miniproject.config.security.UserDetailsServiceImpl;
-import com.example.miniproject.repository.TokenRepository;
+import com.example.miniproject.service.RedisService;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
@@ -13,7 +13,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
@@ -29,14 +28,15 @@ import java.util.Date;
 public class JwtUtil {
 
     private final UserDetailsServiceImpl userDetailsService;
-    private final TokenRepository tokenRepository;
+
+    private final RedisService redisService;
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String REFRESHTOKEN_HEADER = "RefreshToken";
     public static final String AUTHORIZATION_KEY = "auth";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final long TOKEN_TIME = 60000L;
 
-    private static final long REFRESH_TOKEN_TIME = 1 * 60 * 1000L;
+    private static final long REFRESH_TOKEN_TIME = 1 * 60 * 30000L;
 
     @Value("${jwt.secret.access-key}")
     private String accessSecretKey;
@@ -82,6 +82,7 @@ public class JwtUtil {
             return request.getHeader("Authorization").substring(7);
         return null;
     }
+
     // header 에서 RefreshToken 가져오기
     public String resolveRefreshToken(HttpServletRequest request) {
         if (request.getHeader("RefreshToken") != null)
@@ -124,8 +125,9 @@ public class JwtUtil {
 
     // RefreshToken 존재유무 확인
     public boolean existsRefreshToken(String refreshToken) {
-        return tokenRepository.existsByRefreshToken(refreshToken);
+        return redisService.getValues(refreshToken) != null;
     }
+
     public Claims getUserInfoFromToken(String token) {
         return Jwts.parserBuilder().setSigningKey(accessKey).build().parseClaimsJws(token).getBody();
     }
@@ -134,6 +136,4 @@ public class JwtUtil {
         UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
         return new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
     }
-
-
 }
